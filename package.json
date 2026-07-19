@@ -1,0 +1,41 @@
+{
+  "name": "triage",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Triage — an intelligent academic workspace that tells students what to work on.",
+  "scripts": {
+    "dev": "vite",
+    "build": "node scripts/version.mjs build && tsc -b && vite build",
+    "build:ci": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit",
+    "version:patch": "node scripts/version.mjs patch",
+    "version:minor": "node scripts/version.mjs minor",
+    "version:major": "node scripts/version.mjs major",
+    "version:show": "node scripts/version.mjs show"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "date-fns": "^3.6.0",
+    "lucide-react": "^0.436.0",
+    "pocketbase": "^0.26.9",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2",
+    "tailwind-merge": "^2.5.2",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.5",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.45",
+    "tailwindcss": "^3.4.11",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.5",
+    "vite-plugin-pwa": "^0.20.5"
+  }
+}

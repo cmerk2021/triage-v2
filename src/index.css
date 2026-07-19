@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+
+    --bg: 240 12% 4%;
+    --bg-subtle: 240 9% 6%;
+    --bg-elevated: 240 8% 9%;
+    --bg-inset: 240 12% 3%;
+
+    --border: 240 6% 15%;
+    --border-strong: 240 6% 24%;
+
+    --fg: 240 12% 96%;
+    --fg-muted: 240 5% 64%;
+    --fg-subtle: 240 5% 46%;
+    --fg-faint: 240 5% 32%;
+
+    --accent: 245 82% 67%;
+    --accent-fg: 0 0% 100%;
+    --accent-muted: 245 40% 22%;
+
+    --danger: 2 74% 63%;
+    --danger-muted: 2 50% 22%;
+    --warning: 38 92% 60%;
+    --warning-muted: 38 55% 20%;
+    --success: 152 58% 50%;
+    --success-muted: 152 40% 18%;
+
+    --radius: 10px;
+
+    /* Course accent palette (hue references) */
+    --course-indigo: 245 82% 67%;
+    --course-blue: 212 92% 62%;
+    --course-cyan: 190 85% 55%;
+    --course-emerald: 152 62% 50%;
+    --course-amber: 38 92% 60%;
+    --course-rose: 346 82% 62%;
+    --course-violet: 268 78% 68%;
+    --course-orange: 24 90% 60%;
+    --course-teal: 172 66% 48%;
+    --course-pink: 322 78% 66%;
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+
+    --bg: 240 20% 99%;
+    --bg-subtle: 240 18% 97%;
+    --bg-elevated: 0 0% 100%;
+    --bg-inset: 240 18% 95%;
+
+    --border: 240 12% 90%;
+    --border-strong: 240 10% 82%;
+
+    --fg: 240 20% 12%;
+    --fg-muted: 240 8% 40%;
+    --fg-subtle: 240 6% 52%;
+    --fg-faint: 240 6% 68%;
+
+    --accent: 245 72% 58%;
+    --accent-fg: 0 0% 100%;
+    --accent-muted: 245 70% 92%;
+
+    --danger: 2 70% 52%;
+    --danger-muted: 2 80% 94%;
+    --warning: 34 88% 46%;
+    --warning-muted: 38 90% 92%;
+    --success: 152 52% 40%;
+    --success-muted: 152 60% 92%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: hsl(var(--bg));
+    color: hsl(var(--fg));
+    font-family: "InterVariable", "Inter", -apple-system, BlinkMacSystemFont,
+      "Segoe UI", system-ui, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior-y: none;
+  }
+
+  @supports (font-variation-settings: normal) {
+    body {
+      font-family: "InterVariable", "Inter", system-ui, sans-serif;
+    }
+  }
+
+  ::selection {
+    background-color: hsl(var(--accent) / 0.3);
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--accent) / 0.6);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border-strong));
+    border-radius: 999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
