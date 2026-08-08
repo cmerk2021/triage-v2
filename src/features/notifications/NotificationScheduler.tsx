@@ -19,6 +19,10 @@ export function NotificationScheduler() {
   useEffect(() => {
     if (!preferences.notificationsEnabled || !notificationsSupported()) return;
     if (Notification.permission !== "granted") return;
+    // When server push is on, the push worker owns the morning/evening nudges
+    // (they fire even when the app is closed); skip the in-app timers to avoid
+    // duplicate notifications.
+    if (preferences.pushEnabled) return;
 
     const timers: number[] = [];
 
@@ -44,6 +48,7 @@ export function NotificationScheduler() {
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [
     preferences.notificationsEnabled,
+    preferences.pushEnabled,
     preferences.morningBriefingTime,
     preferences.eveningReminderTime,
     engine,

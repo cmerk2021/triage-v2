@@ -9,6 +9,9 @@ services:
     container_name: triage
     ports:
       - "8090:8090"
+    environment:
+      # Public VAPID key — the /api/push/config hook serves this to browsers.
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
     volumes:
       - triage_data:/pb/pb_data
     restart: unless-stopped
@@ -18,6 +21,26 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  # Web Push worker — delivers reminders even when the app is closed.
+  # Requires a PocketBase superuser and VAPID keys (see push-server/README.md).
+  triage-push:
+    build:
+      context: ./push-server
+    image: triage-push:latest
+    container_name: triage-push
+    depends_on:
+      triage:
+        condition: service_healthy
+    environment:
+      PB_URL: http://triage:8090
+      PB_ADMIN_EMAIL: ${PB_ADMIN_EMAIL:-}
+      PB_ADMIN_PASSWORD: ${PB_ADMIN_PASSWORD:-}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@triage.app}
+      POLL_INTERVAL_MS: ${POLL_INTERVAL_MS:-60000}
+    restart: unless-stopped
 
 volumes:
   triage_data:

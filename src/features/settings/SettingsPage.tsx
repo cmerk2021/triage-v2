@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LogOut, Plus, X } from "lucide-react";
+import { Download, LogOut, Plus, Share, X } from "lucide-react";
 import {
   Button,
   Field,
@@ -20,6 +20,13 @@ import {
   requestNotificationPermission,
   showNotification,
 } from "@/features/notifications/notifications";
+import {
+  getVapidPublicKey,
+  pushSupported,
+  subscribeToPush,
+  unsubscribeFromPush,
+} from "@/lib/push";
+import { usePWAInstall } from "@/lib/pwa";
 
 function Section({
   title,
@@ -75,6 +82,7 @@ export function SettingsPage() {
   const toast = useUIStore((s) => s.toast);
 
   const [name, setName] = useState(user?.name ?? "");
+  const install = usePWAInstall();
 
   const activeSemester = semesters.find(
     (s) => s.id === preferences.activeSemesterId,
@@ -90,6 +98,29 @@ export function SettingsPage() {
       }
     }
     await updatePreferences({ notificationsEnabled: enabled });
+  }
+
+  async function togglePush(enabled: boolean) {
+    if (enabled) {
+      if (!pushSupported()) {
+        toast("Push isn't supported in this browser", "danger");
+        return;
+      }
+      if (!(await getVapidPublicKey())) {
+        toast("Push isn't configured on the server yet", "danger");
+        return;
+      }
+      const ok = await subscribeToPush();
+      if (!ok) {
+        toast("Couldn't enable push. Check notification permissions.", "danger");
+        return;
+      }
+      await updatePreferences({ pushEnabled: true, notificationsEnabled: true });
+      toast("Push reminders on — they'll reach you even when Triage is closed", "success");
+    } else {
+      await unsubscribeFromPush().catch(() => {});
+      await updatePreferences({ pushEnabled: false });
+    }
   }
 
   function updateWindow(i: number, patch: Partial<StudyWindow>) {
@@ -242,16 +273,57 @@ export function SettingsPage() {
       </Section>
 
       <Section
-        title="Notifications"
-        description="A gentle morning briefing and evening study nudge."
+        title="App & notifications"
+        description="Install Triage and let it nudge you toward your work."
       >
-        <Row label="Enable notifications" hint="Shown while Triage is open.">
+        <Row
+          label="Install Triage"
+          hint={
+            install.installed
+              ? "Installed — you're all set."
+              : install.isIOS
+                ? "Tap Share, then Add to Home Screen."
+                : "Add to your home screen for reminders anywhere."
+          }
+        >
+          {install.installed ? (
+            <span className="text-[13px] font-medium text-accent">Installed</span>
+          ) : install.canInstall ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Download className="h-4 w-4" />}
+              onClick={async () => {
+                const ok = await install.promptInstall();
+                if (ok) toast("Triage installed", "success");
+              }}
+            >
+              Install
+            </Button>
+          ) : install.isIOS ? (
+            <Share className="h-4 w-4 text-fg-faint" />
+          ) : (
+            <span className="text-xs text-fg-faint">Use browser menu</span>
+          )}
+        </Row>
+
+        <Row
+          label="Push reminders"
+          hint="Delivered even when Triage is closed — best on installed apps."
+        >
+          <Switch
+            checked={preferences.pushEnabled}
+            onChange={togglePush}
+          />
+        </Row>
+
+        <Row label="In-app notifications" hint="Shown only while Triage is open.">
           <Switch
             checked={preferences.notificationsEnabled}
             onChange={toggleNotifications}
           />
         </Row>
-        {preferences.notificationsEnabled && (
+        {(preferences.notificationsEnabled || preferences.pushEnabled) && (
           <>
             <Row label="Morning briefing">
               <Input

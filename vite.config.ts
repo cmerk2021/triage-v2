@@ -12,18 +12,27 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      // Custom service worker (src/sw.ts) so we can handle Web Push events.
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg"],
+      injectRegister: false,
+      includeAssets: ["favicon.svg", "icon-maskable.svg"],
       manifest: {
-        name: "Triage",
+        id: "/",
+        name: "Triage — your academic workspace",
         short_name: "Triage",
         description: "Tell Triage what's due. Triage tells you what to work on.",
+        lang: "en",
         theme_color: "#0b0b0f",
         background_color: "#0b0b0f",
         display: "standalone",
+        display_override: ["standalone", "minimal-ui"],
         orientation: "portrait",
         start_url: "/",
         scope: "/",
+        categories: ["education", "productivity"],
         icons: [
           {
             src: "/favicon.svg",
@@ -32,27 +41,24 @@ export default defineConfig({
             purpose: "any",
           },
           {
-            src: "/favicon.svg",
+            src: "/icon-maskable.svg",
             sizes: "any",
             type: "image/svg+xml",
             purpose: "maskable",
           },
         ],
-      },
-      workbox: {
-        navigateFallbackDenylist: [/^\/api/, /^\/_/],
-        globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "triage-api",
-              networkTimeoutSeconds: 5,
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 },
-            },
-          },
+        shortcuts: [
+          { name: "Today", short_name: "Today", url: "/" },
+          { name: "Assignments", short_name: "Work", url: "/assignments" },
+          { name: "Calendar", short_name: "Calendar", url: "/calendar" },
         ],
+      },
+      injectManifest: {
+        globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
+      },
+      devOptions: {
+        enabled: false,
+        type: "module",
       },
     }),
   ],

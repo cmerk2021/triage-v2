@@ -8,6 +8,7 @@ import { QuickAddDialog } from "@/features/assignments/QuickAddDialog";
 import { AssignmentDetail } from "@/features/assignments/AssignmentDetail";
 import { CourseEditor } from "@/features/courses/CourseEditor";
 import { NotificationScheduler } from "@/features/notifications/NotificationScheduler";
+import { InstallPrompt } from "@/features/pwa/InstallPrompt";
 
 export function AppShell({ children }: { children: ReactNode }) {
   useGlobalShortcuts();
@@ -28,6 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <CourseEditor />
       <ToastViewport />
       <NotificationScheduler />
+      <InstallPrompt />
     </div>
   );
 }

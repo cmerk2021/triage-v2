@@ -116,8 +116,22 @@ export interface Preferences {
   morningBriefingTime: string;
   eveningReminderTime: string;
   notificationsEnabled: boolean;
+  /** Server-sent Web Push reminders that fire even when the app is closed. */
+  pushEnabled: boolean;
   weekStartsOn: 0 | 1;
   theme: ThemePreference;
+}
+
+/** A browser's Web Push endpoint, stored server-side so the push worker can reach it. */
+export interface PushSubscriptionRecord extends BaseRecord {
+  owner: ID;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  userAgent: string;
+  platform: string;
+  timezone: string;
+  enabled: boolean;
 }
 
 export interface TriageUser extends BaseRecord {
@@ -134,6 +148,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   morningBriefingTime: "08:00",
   eveningReminderTime: "19:00",
   notificationsEnabled: false,
+  pushEnabled: false,
   weekStartsOn: 0,
   theme: "dark",
 };

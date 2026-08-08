@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth.store";
 import { useDataStore } from "@/stores/data.store";
 import { FullPageSpinner } from "@/design-system";
+import { syncPushSubscription } from "@/lib/push";
 import { useTheme } from "./theme";
 import { AppShell } from "./layout/AppShell";
 import { AuthPage } from "@/features/auth/AuthPage";
@@ -33,6 +34,10 @@ export default function App() {
     if (user) void load();
     else reset();
   }, [user, load, reset]);
+
+  useEffect(() => {
+    if (user && preferences.pushEnabled) void syncPushSubscription();
+  }, [user, preferences.pushEnabled]);
 
   if (!ready) return <FullPageSpinner />;
   if (!user) return <AuthPage />;

@@ -46,6 +46,7 @@ RUN ARCH="$(uname -m)"; \
 
 # Database migrations (schema-as-code) and static frontend.
 COPY pb_migrations /pb/pb_migrations
+COPY pb_hooks /pb/pb_hooks
 COPY --from=frontend /app/dist /pb/pb_public
 COPY version.json /pb/version.json
 
@@ -54,4 +55,4 @@ VOLUME ["/pb/pb_data"]
 
 # PocketBase serves the SPA from pb_public with index fallback and the
 # REST API from /api on the same port. One process, one container.
-ENTRYPOINT ["/pb/pocketbase", "serve", "--http=0.0.0.0:8090", "--dir=/pb/pb_data", "--publicDir=/pb/pb_public", "--migrationsDir=/pb/pb_migrations"]
+ENTRYPOINT ["/pb/pocketbase", "serve", "--http=0.0.0.0:8090", "--dir=/pb/pb_data", "--publicDir=/pb/pb_public", "--migrationsDir=/pb/pb_migrations", "--hooksDir=/pb/pb_hooks"]

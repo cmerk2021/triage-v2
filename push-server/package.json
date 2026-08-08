@@ -1,0 +1,19 @@
+{
+  "name": "triage-push-server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Web Push worker for Triage — delivers scheduled study reminders even when the app is closed.",
+  "scripts": {
+    "start": "node index.mjs",
+    "generate-vapid": "node generate-vapid.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "pocketbase": "^0.26.9",
+    "web-push": "^3.6.7"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
