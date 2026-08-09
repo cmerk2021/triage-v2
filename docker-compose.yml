@@ -1,7 +1,7 @@
 services:
   triage:
-    # Prebuilt image from GHCR (override OWNER via .env). `build` is a fallback
-    # for developers running from a checkout with `docker compose up --build`.
+    # Prebuilt image from GHCR. Override with TRIAGE_IMAGE in .env; `build` is a
+    # fallback for developers running from a checkout with `docker compose up --build`.
     image: ${TRIAGE_IMAGE:-ghcr.io/cmerk2021/triage:latest}
     build:
       context: .

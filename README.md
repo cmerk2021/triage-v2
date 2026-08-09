@@ -124,54 +124,97 @@ is injected into the frontend at build time (`__APP_VERSION__`), shown in
 
 ## Deployment
 
-Everything runs in **one Docker container**: PocketBase serves both the REST API
-and the built SPA (with SPA fallback) on a single port. Data persists in a
-volume.
+Triage runs as two services wired together by
+[`docker-compose.yml`](docker-compose.yml):
+
+| Service        | Image                          | Role                                              |
+| -------------- | ------------------------------ | ------------------------------------------------- |
+| `triage`       | `ghcr.io/cmerk2021/triage`      | PocketBase + SPA + migrations + hooks (one port)  |
+| `triage-push`  | `ghcr.io/cmerk2021/triage-push` | Web Push worker for scheduled study reminders     |
+
+Both are published as **multi-arch prebuilt images** (`linux/amd64` +
+`linux/arm64`) to the GitHub Container Registry on every push to `main` and
+every `v*` tag, via
+[`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml).
+
+### Deploy from prebuilt images (recommended)
+
+You only need **two files on the server**: `docker-compose.yml` and a `.env`.
+No git checkout, no build step.
+
+**1. Generate VAPID keys** (one time — enables Web Push). With Node installed:
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+This prints a `Public Key` and a `Private Key`. Keep the private key secret.
+
+**2. Create the `.env`** next to `docker-compose.yml`:
+
+```dotenv
+# ── Web Push (required for reminders that fire when the app is closed) ──
+VAPID_PUBLIC_KEY=<public key from step 1>     # served to browsers by the app
+VAPID_PRIVATE_KEY=<private key from step 1>   # used only by the push worker
+VAPID_SUBJECT=mailto:you@example.com          # a contact URL you own
+
+# ── PocketBase superuser the push worker signs in as (set in step 4) ──
+PB_ADMIN_EMAIL=admin@example.com
+PB_ADMIN_PASSWORD=a-long-random-password
+
+# ── Optional ──
+# TRIAGE_IMAGE=ghcr.io/cmerk2021/triage:latest
+# TRIAGE_PUSH_IMAGE=ghcr.io/cmerk2021/triage-push:latest
+# POLL_INTERVAL_MS=60000                       # how often the worker checks (ms)
+```
+
+> Push notifications require **HTTPS** in production (put the app behind a
+> reverse proxy / TLS). `localhost` is exempt, so plain HTTP is fine for testing.
+
+**3. Pull and start:**
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+Open the app on port `8090`.
+
+**4. Create the superuser** the worker authenticates with (must match
+`PB_ADMIN_*` in your `.env`):
+
+```bash
+docker compose exec triage /pb/pocketbase superuser upsert \
+  "$PB_ADMIN_EMAIL" "$PB_ADMIN_PASSWORD"
+```
+
+Then restart the worker so it picks up the account: `docker compose restart triage-push`.
+Students just sign up in the app; enable reminders under **Settings → App &
+notifications**.
+
+### App only (no push)
+
+If you don't want reminders, run just the app image — nothing else to configure:
+
+```bash
+docker run -d -p 8090:8090 -v triage_data:/pb/pb_data \
+  ghcr.io/cmerk2021/triage:latest
+```
+
+Data persists in the `triage_data` volume either way.
+
+### Build from source (development)
+
+From a checkout, build and run everything locally instead of pulling:
 
 ```bash
 docker compose up --build
 ```
 
-Then open http://localhost:8090. The first launch prints a one-time link to
-create the PocketBase superuser account; regular students simply sign up in the
-app.
-
-The image bundles the frontend, PocketBase, the schema migrations, and a
-persistent data volume — no orchestration, no extra services.
-
-### Prebuilt images (GHCR)
-
-Every push to `main` and every `v*` tag publishes multi-arch images
-(`linux/amd64` + `linux/arm64`) to the GitHub Container Registry via
-[`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml):
-
-- `ghcr.io/<owner>/triage` — the app (PocketBase + SPA + migrations + hooks)
-- `ghcr.io/<owner>/triage-push` — the Web Push reminder worker
-
-Because both images are published, an install needs **only the compose file** —
-no git checkout. Copy [`docker-compose.yml`](docker-compose.yml), point it at
-your images, and pull:
-
-```bash
-# In a .env next to the compose file:
-TRIAGE_IMAGE=ghcr.io/<owner>/triage:latest
-TRIAGE_PUSH_IMAGE=ghcr.io/<owner>/triage-push:latest
-
-docker compose pull
-docker compose up -d
-```
-
-Replace `<owner>` with your GitHub org/user (the registry is case-insensitive on
-the image path). The app alone can also run as a single container:
-
-```bash
-docker run -d -p 8090:8090 -v triage_data:/pb/pb_data \
-  ghcr.io/<owner>/triage:latest
-```
-
-Data persists in the `triage_data` volume. The push worker additionally needs
-VAPID keys and a PocketBase superuser — see
-[`push-server/README.md`](push-server/README.md).
+The compose `build:` blocks are the fallback used here; the published images are
+ignored when you pass `--build`. See
+[`push-server/README.md`](push-server/README.md) for running the worker outside
+Docker.
 
 
 ---

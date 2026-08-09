@@ -35,12 +35,12 @@ jobs:
       matrix:
         include:
           - name: triage
-            image: ${{ github.repository }}
+            image: ${{ github.repository_owner }}/triage
             context: .
             title: Triage
             description: Tell Triage what's due. Triage tells you what to work on.
           - name: triage-push
-            image: ${{ github.repository }}-push
+            image: ${{ github.repository_owner }}/triage-push
             context: ./push-server
             title: Triage push worker
             description: Web Push worker delivering scheduled study reminders for Triage.
