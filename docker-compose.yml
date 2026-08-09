@@ -1,11 +1,13 @@
 services:
   triage:
+    # Prebuilt image from GHCR (override OWNER via .env). `build` is a fallback
+    # for developers running from a checkout with `docker compose up --build`.
+    image: ${TRIAGE_IMAGE:-ghcr.io/cmerk2021/triage:latest}
     build:
       context: .
       dockerfile: Dockerfile
       args:
         APP_VERSION: ${APP_VERSION:-0.1.0}
-    image: triage:latest
     container_name: triage
     ports:
       - "8090:8090"
@@ -25,9 +27,9 @@ services:
   # Web Push worker — delivers reminders even when the app is closed.
   # Requires a PocketBase superuser and VAPID keys (see push-server/README.md).
   triage-push:
+    image: ${TRIAGE_PUSH_IMAGE:-ghcr.io/cmerk2021/triage-push:latest}
     build:
       context: ./push-server
-    image: triage-push:latest
     container_name: triage-push
     depends_on:
       triage:

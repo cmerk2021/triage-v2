@@ -139,19 +139,39 @@ app.
 The image bundles the frontend, PocketBase, the schema migrations, and a
 persistent data volume — no orchestration, no extra services.
 
-### Prebuilt image (GHCR)
+### Prebuilt images (GHCR)
 
-Every push to `main` and every `v*` tag publishes a multi-arch image
+Every push to `main` and every `v*` tag publishes multi-arch images
 (`linux/amd64` + `linux/arm64`) to the GitHub Container Registry via
 [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml):
+
+- `ghcr.io/<owner>/triage` — the app (PocketBase + SPA + migrations + hooks)
+- `ghcr.io/<owner>/triage-push` — the Web Push reminder worker
+
+Because both images are published, an install needs **only the compose file** —
+no git checkout. Copy [`docker-compose.yml`](docker-compose.yml), point it at
+your images, and pull:
+
+```bash
+# In a .env next to the compose file:
+TRIAGE_IMAGE=ghcr.io/<owner>/triage:latest
+TRIAGE_PUSH_IMAGE=ghcr.io/<owner>/triage-push:latest
+
+docker compose pull
+docker compose up -d
+```
+
+Replace `<owner>` with your GitHub org/user (the registry is case-insensitive on
+the image path). The app alone can also run as a single container:
 
 ```bash
 docker run -d -p 8090:8090 -v triage_data:/pb/pb_data \
   ghcr.io/<owner>/triage:latest
 ```
 
-Replace `<owner>` with your GitHub org/user (the registry is case-insensitive on
-the image path). Data persists in the `triage_data` volume.
+Data persists in the `triage_data` volume. The push worker additionally needs
+VAPID keys and a PocketBase superuser — see
+[`push-server/README.md`](push-server/README.md).
 
 
 ---

@@ -1,9 +1,12 @@
 name: Publish Docker image
 
-# Builds the single-container Triage image (PocketBase + SPA) and publishes it
-# to the GitHub Container Registry (GHCR) for effortless deployment:
+# Builds and publishes the Triage images to the GitHub Container Registry (GHCR)
+# so a deployment only needs the compose file — never a git checkout:
 #
-#   docker run -p 8090:8090 -v triage_data:/pb/pb_data ghcr.io/<owner>/triage:latest
+#   * triage       — single container: PocketBase + SPA + migrations + hooks
+#   * triage-push  — Web Push worker that sends scheduled study reminders
+#
+#   docker compose pull && docker compose up -d
 #
 # Runs on pushes to main, on version tags (v*), and on demand.
 
@@ -15,7 +18,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 concurrency:
   group: docker-${{ github.ref }}
@@ -27,6 +29,21 @@ jobs:
     permissions:
       contents: read
       packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: triage
+            image: ${{ github.repository }}
+            context: .
+            title: Triage
+            description: Tell Triage what's due. Triage tells you what to work on.
+          - name: triage-push
+            image: ${{ github.repository }}-push
+            context: ./push-server
+            title: Triage push worker
+            description: Web Push worker delivering scheduled study reminders for Triage.
 
     steps:
       - name: Checkout
@@ -53,7 +70,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ matrix.image }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{ steps.version.outputs.value }},enable={{is_default_branch}}
@@ -61,19 +78,19 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha,format=short
           labels: |
-            org.opencontainers.image.title=Triage
-            org.opencontainers.image.description=Tell Triage what's due. Triage tells you what to work on.
+            org.opencontainers.image.title=${{ matrix.title }}
+            org.opencontainers.image.description=${{ matrix.description }}
             org.opencontainers.image.version=${{ steps.version.outputs.value }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ${{ matrix.context }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            APP_VERSION=${{ steps.version.outputs.value }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ${{ matrix.name == 'triage' && format('APP_VERSION={0}', steps.version.outputs.value) || '' }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
