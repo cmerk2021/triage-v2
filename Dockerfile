@@ -2,8 +2,12 @@
 
 # ─────────────────────────────────────────────────────────────
 # Stage 1 — Build the frontend
+#
+# Pinned to the native build platform ($BUILDPLATFORM): the output is a static
+# `dist` bundle that's architecture-independent, so we avoid emulating Node
+# under QEMU for arm64 (which crashes V8 with "illegal instruction").
 # ─────────────────────────────────────────────────────────────
-FROM node:22-alpine AS frontend
+FROM --platform=$BUILDPLATFORM node:22-alpine AS frontend
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
