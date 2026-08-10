@@ -112,8 +112,10 @@ async function tick() {
 
   const cache = new Map();
   for (const record of subs) {
+    // Enablement is per-device (the subscription's `enabled` flag, already
+    // filtered above). Preferences supply the per-user schedule/timezone.
     const prefs = record.expand?.owner?.preferences;
-    if (!prefs || !prefs.pushEnabled) continue;
+    if (!prefs) continue;
     await processSubscription(record, prefs, cache).catch((e) =>
       console.error("[triage-push] failed", record.id, e?.message || e),
     );

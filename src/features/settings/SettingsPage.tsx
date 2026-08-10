@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, LogOut, Plus, Share, X } from "lucide-react";
 import {
   Button,
@@ -22,6 +22,7 @@ import {
 } from "@/features/notifications/notifications";
 import {
   getVapidPublicKey,
+  isPushSubscribed,
   pushSupported,
   subscribeToPush,
   unsubscribeFromPush,
@@ -84,6 +85,13 @@ export function SettingsPage() {
   const [name, setName] = useState(user?.name ?? "");
   const install = usePWAInstall();
 
+  // Push is per-device: reflect whether *this* browser holds a subscription.
+  const [pushOn, setPushOn] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  useEffect(() => {
+    isPushSubscribed().then(setPushOn).catch(() => setPushOn(false));
+  }, []);
+
   const activeSemester = semesters.find(
     (s) => s.id === preferences.activeSemesterId,
   );
@@ -101,25 +109,31 @@ export function SettingsPage() {
   }
 
   async function togglePush(enabled: boolean) {
-    if (enabled) {
-      if (!pushSupported()) {
-        toast("Push isn't supported in this browser", "danger");
-        return;
+    if (pushBusy) return;
+    setPushBusy(true);
+    try {
+      if (enabled) {
+        if (!pushSupported()) {
+          toast("Push isn't supported in this browser", "danger");
+          return;
+        }
+        if (!(await getVapidPublicKey())) {
+          toast("Push isn't configured on the server yet", "danger");
+          return;
+        }
+        const ok = await subscribeToPush();
+        if (!ok) {
+          toast("Couldn't enable push. Check notification permissions.", "danger");
+          return;
+        }
+        setPushOn(true);
+        toast("Reminders on for this device — even when Triage is closed", "success");
+      } else {
+        await unsubscribeFromPush().catch(() => {});
+        setPushOn(false);
       }
-      if (!(await getVapidPublicKey())) {
-        toast("Push isn't configured on the server yet", "danger");
-        return;
-      }
-      const ok = await subscribeToPush();
-      if (!ok) {
-        toast("Couldn't enable push. Check notification permissions.", "danger");
-        return;
-      }
-      await updatePreferences({ pushEnabled: true, notificationsEnabled: true });
-      toast("Push reminders on — they'll reach you even when Triage is closed", "success");
-    } else {
-      await unsubscribeFromPush().catch(() => {});
-      await updatePreferences({ pushEnabled: false });
+    } finally {
+      setPushBusy(false);
     }
   }
 
@@ -309,12 +323,9 @@ export function SettingsPage() {
 
         <Row
           label="Push reminders"
-          hint="Delivered even when Triage is closed — best on installed apps."
+          hint="This device — reminders arrive even when Triage is closed. Turn on for each phone or laptop you use."
         >
-          <Switch
-            checked={preferences.pushEnabled}
-            onChange={togglePush}
-          />
+          <Switch checked={pushOn} onChange={togglePush} disabled={pushBusy} />
         </Row>
 
         <Row label="In-app notifications" hint="Shown only while Triage is open.">
@@ -323,7 +334,7 @@ export function SettingsPage() {
             onChange={toggleNotifications}
           />
         </Row>
-        {(preferences.notificationsEnabled || preferences.pushEnabled) && (
+        {(preferences.notificationsEnabled || pushOn) && (
           <>
             <Row label="Morning briefing">
               <Input

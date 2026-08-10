@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/auth.store";
 import { useEngine } from "@/features/recommendations/useEngine";
+import { isPushSubscribed } from "@/lib/push";
 import {
   markOncePerDay,
   msUntilTime,
@@ -16,13 +17,19 @@ export function NotificationScheduler() {
   const preferences = useAuthStore((s) => s.preferences());
   const engine = useEngine();
 
+  // If this device has server push, the worker owns morning/evening nudges.
+  const [pushOn, setPushOn] = useState(false);
+  useEffect(() => {
+    isPushSubscribed().then(setPushOn).catch(() => setPushOn(false));
+  }, []);
+
   useEffect(() => {
     if (!preferences.notificationsEnabled || !notificationsSupported()) return;
     if (Notification.permission !== "granted") return;
-    // When server push is on, the push worker owns the morning/evening nudges
-    // (they fire even when the app is closed); skip the in-app timers to avoid
-    // duplicate notifications.
-    if (preferences.pushEnabled) return;
+    // When server push is on for this device, the push worker owns the
+    // morning/evening nudges (they fire even when the app is closed); skip the
+    // in-app timers to avoid duplicate notifications.
+    if (pushOn) return;
 
     const timers: number[] = [];
 
@@ -48,9 +55,9 @@ export function NotificationScheduler() {
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [
     preferences.notificationsEnabled,
-    preferences.pushEnabled,
     preferences.morningBriefingTime,
     preferences.eveningReminderTime,
+    pushOn,
     engine,
   ]);
 

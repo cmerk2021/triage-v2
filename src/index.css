@@ -83,6 +83,12 @@
     height: 100%;
   }
 
+  /* Use the dynamic viewport so installed PWAs don't run tall on mobile —
+     which pushes the fixed bottom nav below the screen and clips the top. */
+  #root {
+    height: 100dvh;
+  }
+
   body {
     margin: 0;
     background-color: hsl(var(--bg));

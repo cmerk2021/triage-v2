@@ -35,9 +35,10 @@ export default function App() {
     else reset();
   }, [user, load, reset]);
 
+  // Keep this device's push subscription fresh (no-ops if not subscribed).
   useEffect(() => {
-    if (user && preferences.pushEnabled) void syncPushSubscription();
-  }, [user, preferences.pushEnabled]);
+    if (user) void syncPushSubscription();
+  }, [user]);
 
   if (!ready) return <FullPageSpinner />;
   if (!user) return <AuthPage />;
