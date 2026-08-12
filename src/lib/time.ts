@@ -1,6 +1,7 @@
 import {
   differenceInCalendarDays,
   differenceInMinutes,
+  endOfDay,
   format,
   formatDistanceToNowStrict,
   isToday,
@@ -40,6 +41,21 @@ export function describeDueDate(value: string, now: Date = new Date()): string {
   if (isTomorrow(date)) return "Due tomorrow";
   if (days <= 6) return `Due ${format(date, "EEEE")}`;
   return `Due ${format(date, "MMM d")}`;
+}
+
+/** Parse a date-only input value ("YYYY-MM-DD") into a local end-of-day Date. */
+export function parseDateInput(value: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return null;
+  const [, y, m, d] = match;
+  return endOfDay(new Date(Number(y), Number(m) - 1, Number(d)));
+}
+
+/** Format a date as a local "YYYY-MM-DD" value for date inputs. */
+export function toDateInputValue(value: string | Date | null | undefined): string {
+  const date = typeof value === "string" ? parseDate(value) : value ?? null;
+  if (!date || !isValid(date)) return "";
+  return format(date, "yyyy-MM-dd");
 }
 
 export function shortDueDate(value: string): string {

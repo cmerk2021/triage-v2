@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { addDays, endOfDay, nextSaturday } from "date-fns";
 import { Button, Dialog, Field, Input, Select } from "@/design-system";
 import { cn } from "@/lib/utils";
+import { parseDateInput, toDateInputValue } from "@/lib/time";
 import { useDataStore } from "@/stores/data.store";
 import { useUIStore } from "@/stores/ui.store";
 
@@ -109,10 +110,8 @@ export function QuickAddDialog() {
           <Field label="Due date">
             <Input
               type="date"
-              value={due ? due.toISOString().slice(0, 10) : ""}
-              onChange={(e) =>
-                setDue(e.target.value ? endOfDay(new Date(e.target.value)) : null)
-              }
+              value={toDateInputValue(due)}
+              onChange={(e) => setDue(parseDateInput(e.target.value))}
             />
           </Field>
         </div>

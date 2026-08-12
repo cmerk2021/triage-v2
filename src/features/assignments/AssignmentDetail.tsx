@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { endOfDay } from "date-fns";
 import { Paperclip, Trash2, X } from "lucide-react";
+import { parseDateInput, toDateInputValue } from "@/lib/time";
 import {
   Button,
   Dialog,
@@ -131,12 +131,10 @@ export function AssignmentDetail() {
           <Field label="Due date">
             <Input
               type="date"
-              value={assignment.dueDate ? assignment.dueDate.slice(0, 10) : ""}
+              value={toDateInputValue(assignment.dueDate)}
               onChange={(e) =>
                 updateAssignment(assignment.id, {
-                  dueDate: e.target.value
-                    ? endOfDay(new Date(e.target.value)).toISOString()
-                    : "",
+                  dueDate: parseDateInput(e.target.value)?.toISOString() ?? "",
                 })
               }
             />
