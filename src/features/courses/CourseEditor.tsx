@@ -6,6 +6,7 @@ import {
   Field,
   Input,
   Select,
+  Switch,
 } from "@/design-system";
 import { cn } from "@/lib/utils";
 import { dayLabel } from "@/lib/time";
@@ -28,6 +29,7 @@ interface FormState {
   color: CourseColor;
   semester: string;
   meetingSchedule: MeetingBlock[];
+  acceptsLateWork: boolean;
 }
 
 const EMPTY: FormState = {
@@ -39,6 +41,7 @@ const EMPTY: FormState = {
   color: "indigo",
   semester: "",
   meetingSchedule: [],
+  acceptsLateWork: true,
 };
 
 export function CourseEditor() {
@@ -76,6 +79,7 @@ export function CourseEditor() {
         color: course.color,
         semester: course.semester,
         meetingSchedule: course.meetingSchedule,
+        acceptsLateWork: course.acceptsLateWork,
       });
     } else {
       setForm({
@@ -240,6 +244,22 @@ export function CourseEditor() {
                 style={{ backgroundColor: courseHsl(c) }}
               />
             ))}
+          </div>
+        </Field>
+
+        <Field label="Late work">
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-bg-subtle px-3 py-2.5">
+            <div>
+              <p className="text-sm text-fg">Accepts late work</p>
+              <p className="mt-0.5 text-xs text-fg-faint">
+                Firm deadlines are prioritized before they become late.
+              </p>
+            </div>
+            <Switch
+              checked={form.acceptsLateWork}
+              onChange={(acceptsLateWork) => set("acceptsLateWork", acceptsLateWork)}
+              label="Accepts late work"
+            />
           </div>
         </Field>
 

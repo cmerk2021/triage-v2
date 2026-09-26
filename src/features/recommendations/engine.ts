@@ -1,5 +1,6 @@
 import type {
   AssignmentWithSubtasks,
+  Course,
   Preferences,
   Subtask,
 } from "@/lib/types";
@@ -57,6 +58,7 @@ export interface NotificationSummary {
 
 export interface EngineContext {
   assignments: AssignmentWithSubtasks[];
+  courses: Course[];
   now: Date;
   availableMinutes: number;
   preferences: Preferences;
@@ -70,6 +72,7 @@ interface Analysis {
   remainingMinutes: number;
   completion: number;
   started: boolean;
+  acceptsLateWork: boolean;
   overdue: boolean;
   dueInDays: number | null;
   pressure: number;
@@ -141,6 +144,8 @@ function analyze(a: AssignmentWithSubtasks, ctx: EngineContext): Analysis {
     a.status === "in_progress" ||
     !!a.startedAt ||
     (a.subtasks ?? []).some((s) => s.done);
+  const acceptsLateWork =
+    ctx.courses.find((course) => course.id === a.course)?.acceptsLateWork ?? true;
 
   // Daily capacity the student realistically has to spend on this work.
   const dailyCapacity = Math.max(ctx.preferences.dailyGoalMinutes || 120, 30);
@@ -159,6 +164,11 @@ function analyze(a: AssignmentWithSubtasks, ctx: EngineContext): Analysis {
     score += Math.max(0, 210 - dueInDays * 24);
   } else {
     score += 20; // undated work has a gentle baseline pull
+  }
+
+  if (!acceptsLateWork && dueInDays !== null && dueInDays >= 0) {
+    const proximity = Math.max(0, 4 - dueInDays);
+    score += 35 + proximity * 20 + clamp(pressure, 0, 1.5) * 35;
   }
 
   score += clamp(pressure, 0, 2.5) * 130;
@@ -180,6 +190,7 @@ function analyze(a: AssignmentWithSubtasks, ctx: EngineContext): Analysis {
     remainingMinutes,
     completion,
     started,
+    acceptsLateWork,
     overdue,
     dueInDays,
     pressure,
@@ -196,6 +207,11 @@ function reasonFor(x: Analysis): string {
   const almost = x.completion >= 0.7 && x.completion < 1;
 
   if (x.overdue) return "Overdue — worth clearing first.";
+  if (!x.acceptsLateWork && x.dueInDays !== null && x.dueInDays <= 2) {
+    return x.dueInDays === 0
+      ? "Firm deadline today — late work isn't accepted."
+      : "Firm deadline approaching — late work isn't accepted.";
+  }
   if (almost && subtaskCount > 0) {
     return `${doneCount} of ${subtaskCount} done — almost there.`;
   }

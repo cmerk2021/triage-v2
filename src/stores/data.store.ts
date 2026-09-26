@@ -44,6 +44,7 @@ function mapCourse(r: RecordModel): Course {
       : [],
     color: (r.color || COURSE_COLORS[hashString(r.id) % COURSE_COLORS.length]) as CourseColor,
     icon: r.icon ?? "",
+    acceptsLateWork: r.acceptsLateWork ?? true,
     archived: !!r.archived,
   };
 }

@@ -29,6 +29,7 @@ export function availableMinutesToday(
  */
 export function useEngine(availableMinutesOverride?: number) {
   const assignments = useDataStore((s) => s.assignments);
+  const courses = useDataStore((s) => s.courses);
   const subtasks = useDataStore((s) => s.subtasks);
   const preferences = useAuthStore((s) => s.preferences());
 
@@ -45,9 +46,10 @@ export function useEngine(availableMinutesOverride?: number) {
 
     return createEngine({
       assignments: withSubtasks,
+      courses,
       now,
       availableMinutes,
       preferences,
     });
-  }, [assignments, subtasks, preferences, availableMinutesOverride]);
+  }, [assignments, courses, subtasks, preferences, availableMinutesOverride]);
 }

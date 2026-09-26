@@ -68,6 +68,7 @@ export interface Course extends BaseRecord {
   meetingSchedule: MeetingBlock[];
   color: CourseColor;
   icon: string;
+  acceptsLateWork: boolean;
   archived: boolean;
 }
 
